@@ -225,7 +225,73 @@ public sealed partial class NdiSender : MonoBehaviour
 
     void OnDestroy() => Restart(false);
 
-    #endregion
-}
+
+        private int numSamples = 0;
+        private int numChannels = 0;
+        private float[] samples = new float[1];
+        
+    private void OnAudioFilterRead(float[] data, int channels)
+    {
+            
+        if (data.Length == 0 || channels == 0) return;
+        
+        unsafe
+        {
+            bool settingsChanged = false;
+            int tempSamples = data.Length / channels;
+                
+            if (tempSamples != numSamples)
+            {
+                settingsChanged = true;
+                numSamples = tempSamples;
+                //PluginEntry.SetNumSamples(_plugin, numSamples);
+            }
+
+            if (channels != numChannels)
+            {
+                settingsChanged = true;
+                numChannels = channels;
+                //PluginEntry.SetAudioChannels(_plugin, channels);
+            }
+
+            if (settingsChanged)
+            {
+                System.Array.Resize<float>(ref samples, numSamples * numChannels);
+            }
+
+            for (int ch = 0; ch < numChannels; ch++)
+            {
+                for (int i = 0; i < numSamples; i++)
+                {
+                    samples[numSamples * ch + i] = data[i * numChannels];
+                }
+            }
+
+            fixed (float* p = samples)
+            {
+                    //PluginEntry.SetAudioData(_plugin, (IntPtr)p);
+                var frame = new Interop.AudioFrame
+                {
+                    SampleRate = 48000,
+                    NoChannels = channels,
+                    NoSamples = numSamples,
+                    ChannelStride = numSamples * sizeof(float),
+                    Data = (System.IntPtr)p
+                };
+
+                    if (_send != null)
+                    {
+                        _send.SendAudio(frame);
+                    }
+            }
+
+                //if (audioEnabled && pluginReady) PluginEntry.SendAudio(_plugin);
+
+                
+        }
+    }
+
+        #endregion
+    }
 
 }

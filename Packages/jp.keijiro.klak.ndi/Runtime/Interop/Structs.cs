@@ -60,12 +60,16 @@ public struct VideoFrame
 }
 
 [StructLayoutAttribute(LayoutKind.Sequential)]
-public struct Tally
+public struct AudioFrame
 {
-    [MarshalAsAttribute(UnmanagedType.U1)]
-    public bool OnProgram;
-    [MarshalAsAttribute(UnmanagedType.U1)]
-    public bool OnPreview;
+    public int SampleRate;
+    public int NoChannels;
+    public int NoSamples;
+    public long Timecode;
+    public IntPtr Data;
+    public int ChannelStride;
+    public IntPtr Metadata;
+    public long Timestamp;
 }
 
 }
